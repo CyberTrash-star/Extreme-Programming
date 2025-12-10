@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>联系人信息管理系统</title>
+  <!-- 引入外部资源：CSS在前，JS在后 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+  <style>
+    /* 全局样式 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* 子元素 */
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding-top: 56px;
+      color: #333;
+    }
+
+    /* 导航栏 */
+    .app-header {
+      background-color: #6f42c1;
+      color: white;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 10px 0;
+      z-index: 100;
+    }
+
+    .app-title {
+      font-size: 1.25rem;
+      margin: 0 20px;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      width: 96%;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+
+    /* 操作栏 */
+    .action-bar {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    .search-container {
+      display: inline-block;
+      margin-right: 15px;
+    }
+
+    .search-input {
+      padding: 6px 10px;
+      width: 220px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    /* 按钮样式 */
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-left: 5px;
+    }
+
+    .btn-search {
+      background-color: #007bff;
+    }
+
+    .btn-add {
+      background-color: #28a745;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #333;
+    }
+
+    .btn-delete {
+      background-color: #dc3545;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+    }
+
+    /* 表格容器 */
+    .table-wrapper {
+      background-color: white;
+      padding: 15px;
+      border: 1px solid #ddd;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .data-table th {
+      background-color: #f0f0f0;
+      font-weight: 600;
+    }
+
+    .favorite-icon {
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .method-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .method-row select,
+    .method-row input {
+      flex: 1;
+    }
+
+    .method-row .btn-remove-method {
+      padding: 6px 10px;
+      background: #dc3545;
+    }
+
+    /* 模态框 */
+    .modal-content {
+      border: 1px solid #ccc;
+    }
+
+    .modal-header {
+      background-color: #6f42c1;
+      color: white;
+      padding: 10px 15px;
+    }
+
+    .modal-body {
+      padding: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .modal-footer {
+      padding: 10px 15px;
+      border-top: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <!-- 头部导航 -->
+  <header class="app-header">
+    <div class="app-title">联系人管理系统</div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 操作栏 -->
+    <div class="action-bar">
+      <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索姓名或电话">
+        <button class="btn btn-search" id="searchBtn">
+          <i class="bi bi-search"></i> 搜索
+        </button>
+      </div>
+      <button class="btn btn-add" id="addBtn">
+        <i class="bi bi-plus-circle"></i> 添加
+      </button>
+      <button class="btn btn-edit" id="editBtn">
+        <i class="bi bi-pencil"></i> 修改
+      </button>
+      <button class="btn btn-delete" id="deleteBtn">
+        <i class="bi bi-trash"></i> 删除
+      </button>
+      <button class="btn btn-secondary" id="exportBtn">
+        <i class="bi bi-download"></i> 导出Excel
+      </button>
+      <button class="btn btn-secondary" id="importBtn">
+        <i class="bi bi-upload"></i> 导入Excel
+      </button>
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none">
+    </div>
+
+    <!-- 表格容器 -->
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll"></th>
+            <th>收藏</th>
+            <th>姓名</th>
+            <th>电话</th>
+            <th>邮箱</th>
+            <th>社交</th>
+            <th>住址</th>
+            <th>其他</th>
+          </tr>
+        </thead>
+        <tbody id="contactTableBody">
+          <!-- 表格内容动态生成 -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- 添加/修改模态框 -->
+  <div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">添加联系人</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="contactId">
+          <div class="form-group">
+            <label for="username" class="form-label">姓名</label>
+            <input type="text" class="form-input" id="username" placeholder="请输入姓名">
+          </div>
+          <div class="form-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="favorite">
+              <label class="form-check-label" for="favorite">设为收藏</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">联系方式</label>
+            <div id="contactMethodsContainer"></div>
+            <button type="button" class="btn btn-search" id="addMethodBtn">
+              <i class="bi bi-plus"></i> 添加一条联系方式
+            </button>
+            <small class="text-muted d-block mt-2">
+              类型支持：电话、邮箱、社交、地址、其他。至少填写一条。
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-search" id="saveBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 自动匹配本机后端接口地址，默认 http://127.0.0.1:5000/api
+    const apiProtocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
+    const apiHost = window.location.hostname || '127.0.0.1';
+    const API_BASE = window.API_BASE || `${apiProtocol}//${apiHost}:5000/api`;
+    let currentContactId = null;
+
+    // 页面加载完成后初始化
+    $(document).ready(function() {
+      loadContacts();
+      bindEvents();
+      resetContactMethods();
+    });
+
+    /**
+     * 绑定所有交互事件
+     */
+    function bindEvents() {
+      $('#searchBtn').click(loadContacts);
+      $('#searchInput').on('keypress', function(e) {
+        if (e.key === 'Enter') loadContacts();
+      });
+      $('#addBtn').click(showAddModal);
+      $('#editBtn').click(showEditModal);
+      $('#deleteBtn').click(deleteContact);
+      $('#saveBtn').click(saveContact);
+      $('#selectAll').click(toggleSelectAll);
+      $('#addMethodBtn').click(() => addMethodRow());
+      $('#contactMethodsContainer').on('click', '.btn-remove-method', function() {
+        $(this).closest('.method-row').remove();
+      });
+      $('#contactTableBody').on('click', '.favorite-icon', toggleFavorite);
+      $('#exportBtn').click(exportExcel);
+      $('#importBtn').click(() => $('#importFile').click());
+      $('#importFile').on('change', importExcel);
+    }
+
+    /**
+     * 加载联系人数据
+     * 从后端接口获取数据，支持搜索关键词过滤
+     */
+    function loadContacts() {
+      const keyword = $('#searchInput').val().trim();
+      $.get(
+        `${API_BASE}/users`,
+        { keyword: keyword },
+        function(response) {
+          if (response.code === 200) {
+            renderTable(response.data);
+          } else {
+            alert('获取数据失败：' + response.message);
+          }
+        }
+      ).fail(function() {
+        alert('网络错误，请检查后端服务是否启动');
+      });
+    }
+
+    /**
+     * 渲染表格数据
+     * @param {Array} contacts - 联系人数组
+     */
+    function renderTable(contacts) {
+      const tableBody = $('#contactTableBody');
+      tableBody.empty();
+
+      contacts.forEach(function(contact) {
+        const grouped = { phone: [], email: [], social: [], address: [], other: [] };
+        (contact.contact_methods || []).forEach(function(method) {
+          const list = grouped[method.type] || grouped.other;
+          list.push(method.value);
+        });
+        if (contact.phone_number && !grouped.phone.includes(contact.phone_number)) {
+          grouped.phone.unshift(contact.phone_number);
+        }
+        if (contact.address && !grouped.address.includes(contact.address)) {
+          grouped.address.unshift(contact.address);
+        }
+
+        const favoriteIcon = contact.is_favorite ? 'bi-star-fill text-warning' : 'bi-star';
+        const row = $(`
+          <tr>
+            <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
+            <td><i class="bi ${favoriteIcon} favorite-icon" data-id="${contact.id}" title="点击切换收藏"></i></td>
+            <td>${contact.username}</td>
+            <td>${grouped.phone.join('<br>') || '-'}</td>
+            <td>${grouped.email.join('<br>') || '-'}</td>
+            <td>${grouped.social.join('<br>') || '-'}</td>
+            <td>${grouped.address.join('<br>') || '-'}</td>
+            <td>${grouped.other.join('<br>') || '-'}</td>
+          </tr>
+        `);
+        tableBody.append(row);
+      });
+    }
+
+    function buildMethodRow(method = { type: 'phone', value: '', label: '' }) {
+      return $(`
+        <div class="method-row">
+          <select class="form-select method-type">
+            <option value="phone" ${method.type === 'phone' ? 'selected' : ''}>电话</option>
+            <option value="email" ${method.type === 'email' ? 'selected' : ''}>邮箱</option>
+            <option value="social" ${method.type === 'social' ? 'selected' : ''}>社交</option>
+            <option value="address" ${method.type === 'address' ? 'selected' : ''}>地址</option>
+            <option value="other" ${method.type === 'other' ? 'selected' : ''}>其他</option>
+          </select>
+          <input type="text" class="form-input method-value" placeholder="填写联系方式" value="${method.value || ''}">
+          <input type="text" class="form-input method-label" placeholder="备注（可选）" value="${method.label || ''}">
+          <button type="button" class="btn btn-remove-method">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      `);
+    }
+
+    function resetContactMethods(methods = []) {
+      const container = $('#contactMethodsContainer');
+      container.empty();
+      if (!methods.length) {
+        addMethodRow({ type: 'phone', value: '', label: '' });
+      } else {
+        methods.forEach(addMethodRow);
+      }
+    }
+
+    function addMethodRow(method) {
+      $('#contactMethodsContainer').append(buildMethodRow(method || { type: 'phone', value: '', label: '' }));
+    }
+
+    function collectContactMethods() {
+      const methods = [];
+      $('#contactMethodsContainer .method-row').each(function() {
+        const type = $(this).find('.method-type').val();
+        const value = $(this).find('.method-value').val().trim();
+        const label = $(this).find('.method-label').val().trim();
+        if (value) {
+          methods.push({ type, value, label });
+        }
+      });
+      return methods;
+    }
+
+    /**
+     * 显示添加联系人模态框
+     */
+    function showAddModal() {
+      currentContactId = null;
+      $('#modalTitle').text('添加联系人');
+      $('#contactId').val('');
+      $('#username').val('');
+      $('#favorite').prop('checked', false);
+      resetContactMethods();
+      $('#contactModal').modal('show');
+    }
+
+    /**
+     * 显示修改联系人模态框
+     */
+    function showEditModal() {
+      const checkedBoxes = $('.contact-checkbox:checked');
+      if (checkedBoxes.length !== 1) {
+        alert('请选择一个联系人进行修改');
+        return;
+      }
+
+      currentContactId = checkedBoxes.first().data('id');
+      $.get(
+        `${API_BASE}/users/${currentContactId}`,
+        function(response) {
+          if (response.code === 200) {
+            const contact = response.data;
+            $('#modalTitle').text('修改联系人');
+            $('#contactId').val(contact.id);
+            $('#username').val(contact.username);
+            $('#favorite').prop('checked', !!contact.is_favorite);
+            resetContactMethods(contact.contact_methods || []);
+            $('#contactModal').modal('show');
+          } else {
+            alert(response.message);
+          }
+        }
+      );
+    }
+
+    /**
+     * 保存联系人（添加或修改）
+     */
+    function saveContact() {
+      const methods = collectContactMethods();
+      const username = $('#username').val().trim();
+      const isFavorite = $('#favorite').prop('checked');
+
+      if (!username) {
+        alert('请填写姓名');
+        return;
+      }
+      if (!methods.length) {
+        alert('至少添加一条联系方式');
+        return;
+      }
+
+      const firstPhone = methods.find(item => item.type === 'phone');
+      const firstAddress = methods.find(item => item.type === 'address');
+
+      const contactData = {
+        username: username,
+        is_favorite: isFavorite,
+        phone_number: firstPhone ? firstPhone.value : '',
+        address: firstAddress ? firstAddress.value : '',
+        contact_methods: methods
+      };
+
+      let url = `${API_BASE}/users`;
+      let method = 'POST';
+      if (currentContactId) {
+        url = `${API_BASE}/users/${currentContactId}`;
+        method = 'PUT';
+      }
+
+      $.ajax({
+        url: url,
+        type: method,
+        contentType: 'application/json',
+        data: JSON.stringify(contactData),
+        success: function(response) {
+          if ([200, 201].includes(response.code)) {
+            alert(response.message);
+            $('#contactModal').modal('hide');
+            loadContacts();
+          } else {
+            alert(response.message);
+          }
+        }
+      });
+    }
+
+    /**
+     * 删除联系人
+     */
+    function deleteContact() {
+      const checkedBoxes = $('.contact-checkbox:checked');
+      if (checkedBoxes.length === 0) {
+        alert('请选择至少一个联系人进行删除');
+        return;
+      }
+
+      if (!confirm('确定要删除选中的联系人吗？')) {
+        return;
+      }
+
+      // 简化：仅删除选中的第一条
+      const contactId = checkedBoxes.first().data('id');
+      $.ajax({
+        url: `${API_BASE}/users/${contactId}`,
+        type: 'DELETE',
+        success: function(response) {
+          if (response.code === 200) {
+            alert(response.message);
+            loadContacts();
+          } else {
+            alert(response.message);
+          }
+        }
+      });
+    }
+
+    /**
+     * 收藏/取消收藏联系人
+     */
+    function toggleFavorite() {
+      const id = $(this).data('id');
+      const isCurrentlyFavorite = $(this).hasClass('bi-star-fill');
+      $.ajax({
+        url: `${API_BASE}/users/${id}`,
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ is_favorite: !isCurrentlyFavorite }),
+        success: function(response) {
+          if (response.code === 200) {
+            loadContacts();
+          } else {
+            alert(response.message);
+          }
+        }
+      });
+    }
+
+    /**
+     * 导出Excel
+     */
+    function exportExcel() {
+      window.location.href = `${API_BASE}/users/export`;
+    }
+
+    /**
+     * 导入Excel
+     */
+    function importExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      $.ajax({
+        url: `${API_BASE}/users/import`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          alert(response.message || '导入完成');
+          loadContacts();
+          $('#importFile').val('');
+        },
+        error: function(xhr) {
+          alert(xhr.responseJSON?.message || '导入失败，请确认模板格式');
+        }
+      });
+    }
+
+    /**
+     * 全选/取消全选
+     */
+    function toggleSelectAll() {
+      const isChecked = $('#selectAll').prop('checked');
+      $('.contact-checkbox').prop('checked', isChecked);
+    }
+  </script>
+</body>
+</html>
